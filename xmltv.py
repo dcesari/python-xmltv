@@ -36,71 +36,71 @@ date_format = '%Y%m%d%H%M%S %Z'
 date_format_notz = '%Y%m%d%H%M%S'
 
 
-def set_attrs(dict, elem, attrs):
+def set_attrs(d, elem, attrs):
     """
-    set_attrs(dict, elem, attrs) -> None
+    set_attrs(d, elem, attrs) -> None
 
-    Add any attributes in 'attrs' found in 'elem' to 'dict'
+    Add any attributes in 'attrs' found in 'elem' to 'd'
     """
     for attr in attrs:
         if attr in elem.keys():
-            dict[attr] = elem.get(attr)
+            d[attr] = elem.get(attr)
 
-def set_boolean(dict, name, elem):
+def set_boolean(d, name, elem):
     """
-    set_boolean(dict, name, elem) -> None
+    set_boolean(d, name, elem) -> None
 
-    If element, 'name' is found in 'elem', set 'dict'['name'] to a boolean
+    If element, 'name' is found in 'elem', set 'd'['name'] to a boolean
     from the 'yes' or 'no' content of the node
     """
     node = elem.find(name)
     if node is not None:
         if node.text.lower() == 'yes':
-            dict[name] = True
+            d[name] = True
         elif node.text.lower() == 'no':
-            dict[name] = False
+            d[name] = False
 
-def append_text(dict, name, elem, with_lang=True):
+def append_text(d, name, elem, with_lang=True):
     """
-    append_text(dict, name, elem, with_lang=True) -> None
+    append_text(d, name, elem, with_lang=True) -> None
 
-    Append any text nodes with 'name' found in 'elem' to 'dict'['name']. If
+    Append any text nodes with 'name' found in 'elem' to 'd'['name']. If
     'with_lang' is 'True', a tuple of ('text', 'lang') is appended
     """
     for node in elem.findall(name):
-        if not name in dict:
-            dict[name] = []
+        if not name in d:
+            d[name] = []
         if with_lang:
-            dict[name].append((node.text, node.get('lang', '')))
+            d[name].append((node.text, node.get('lang', '')))
         else:
-            dict[name].append(node.text)
+            d[name].append(node.text)
 
-def set_text(dict, name, elem, with_lang=True):
+def set_text(d, name, elem, with_lang=True):
     """
-    set_text(dict, name, elem, with_lang=True) -> None
+    set_text(d, name, elem, with_lang=True) -> None
 
-    Set 'dict'['name'] to the text found in 'name', if found under 'elem'. If
+    Set 'd'['name'] to the text found in 'name', if found under 'elem'. If
     'with_lang' is 'True', a tuple of ('text', 'lang') is set
     """
     node = elem.find(name)
     if node is not None:
         if with_lang:
-            dict[name] = (node.text, node.get('lang', ''))
+            d[name] = (node.text, node.get('lang', ''))
         else:
-            dict[name] = node.text
+            d[name] = node.text
 
-def append_icons(dict, elem):
+def append_icons(d, elem):
     """
-    append_icons(dict, elem) -> None
+    append_icons(d, elem) -> None
 
-    Append any icons found under 'elem' to 'dict'
+    Append any icons found under 'elem' to 'd'
     """
     for iconnode in elem.findall('icon'):
-        if not 'icon' in dict:
-            dict['icon'] = []
+        if not 'icon' in d:
+            d['icon'] = []
         icond = {}
         set_attrs(icond, iconnode, ('src', 'width', 'height'))
-        dict['icon'].append(icond)
+        d['icon'].append(icond)
 
 
 def elem_to_channel(elem):
