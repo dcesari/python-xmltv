@@ -610,7 +610,10 @@ class Writer:
 if __name__ == '__main__':
 # Tests
     from pprint import pprint
-    from io import StringIO
+    try:
+        from StringIO import StringIO
+    except ImportError:
+        from io import StringIO
     import sys
 
     # An example file
@@ -749,4 +752,7 @@ if __name__ == '__main__':
         w.addChannel(c)
     for p in programmes:
         w.addProgramme(p)
-    w.write(sys.stdout.buffer, pretty_print=True)
+    try:
+        w.write(sys.stdout.buffer, pretty_print=True)
+    except AttributeError:
+        w.write(sys.stdout, pretty_print=True)
