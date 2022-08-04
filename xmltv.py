@@ -424,7 +424,7 @@ class Writer:
             else:
                 raise ValueError("'programme' must contain '%s' attribute" % attr)
 
-        for attr in ('stop', 'pdc-start', 'vps-start', 'showview', 'videoplus', 'clumpidx'):
+        for attr in ('id', 'stop', 'pdc-start', 'vps-start', 'showview', 'videoplus', 'clumpidx'):
             if attr in programme:
                 self.setattr(p, attr, programme[attr])
 
@@ -506,11 +506,11 @@ class Writer:
                 s = SubElement(a, 'stereo')
                 self.settext(s, programme['audio']['stereo'], with_lang=False)
             if 'present' in programme['audio']:
-                p = SubElement(a, 'present')
+                pr = SubElement(a, 'present')
                 if programme['audio']['present']:
-                    self.settext(p, 'yes', with_lang=False)
+                    self.settext(pr, 'yes', with_lang=False)
                 else:
-                    self.settext(p, 'no', with_lang=False)
+                    self.settext(pr, 'no', with_lang=False)
 
         # Previously shown
         if 'previously-shown' in programme:
