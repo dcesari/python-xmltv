@@ -4,7 +4,7 @@ COPYING
 CREDITS
 MANIFEST
 MANIFEST.in
-README.txt
+README.md
 TODO.txt
 setup.py
 xmltv.dtd

@@ -3,7 +3,7 @@ include COPYING
 include CREDITS
 include MANIFEST
 include MANIFEST.in
-include README.txt
+include README.md
 include TODO.txt
 include setup.py
 include xmltv.py

@@ -9,7 +9,7 @@ setup(
     author_email="jfunk@funktronics.ca",
     url= "http://bitbucket.org/jfunk/python-xmltv",
     py_modules=['xmltv'],
-    long_description=open('README.txt').read() + '\n\n' +
+    long_description=open('README.md').read() + '\n\n' +
                      open('CHANGELOG.txt').read(),
     classifiers=[
         'Development Status :: 5 - Production/Stable',
