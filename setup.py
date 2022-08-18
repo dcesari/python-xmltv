@@ -7,10 +7,16 @@ setup(
     version="1.4.3",
     author="James Oakley",
     author_email="jfunk@funktronics.ca",
-    url= "http://bitbucket.org/jfunk/python-xmltv",
+    url="https://github.com/dcesari/python-xmltv"
     py_modules=['xmltv'],
-    long_description=open('README.md').read() + '\n\n' +
-                     open('CHANGELOG.txt').read(),
+    long_description=
+    """This module provides a simple python API for reading and writing
+    XMLTV files. XMLTV is an XML format for storing TV listings.
+
+    More information on XMLTV can be found at http://membled.com/work/apps/xmltv/
+    """,
+#    long_description=open('README.md').read() + '\n\n' +
+#                     open('CHANGELOG.txt').read(),
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
