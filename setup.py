@@ -7,7 +7,7 @@ setup(
     version="1.4.3",
     author="James Oakley",
     author_email="jfunk@funktronics.ca",
-    url="https://github.com/dcesari/python-xmltv"
+    url="https://github.com/dcesari/python-xmltv",
     py_modules=['xmltv'],
     long_description=
     """This module provides a simple python API for reading and writing
