@@ -19,6 +19,7 @@ with this software; if not, see <http://www.gnu.org/licenses/>.
 import re
 import sys
 import types
+import datetime
 
 if sys.hexversion >= 0x2050000:
     from xml.etree.cElementTree import ElementTree, Element, SubElement, tostring
@@ -34,6 +35,22 @@ VERSION = "1.4.3"
 # The date format used in XMLTV (the %Z will go away in 0.6)
 date_format = '%Y%m%d%H%M%S %Z'
 date_format_notz = '%Y%m%d%H%M%S'
+
+
+def timestamp_from_xmltvtime(tvtime):
+    """
+    timestamp_from_xmltvtime(tvtime) -> int
+
+    return an integer Unix timestamp from an xmltv time,
+    time zone does not actually work at the moment
+    """
+    try:
+        d = datetime.datetime.strptime(tvtime, date_format)
+    except ValueError:
+        tvt = tvtime.split(" ")[0] # remove TZ if any
+        tvt += "0"*(14 - len(tvt)) # lengthen to exactly 14 char
+        d = datetime.datetime.strptime(tvt, date_format_notz)
+    return int(d.timestamp())
 
 
 def set_attrs(d, elem, attrs):
@@ -129,6 +146,27 @@ def read_channels(fp=None, tree=None):
         et = ElementTree()
         tree = et.parse(fp)
     return [elem_to_channel(elem) for elem in tree.findall('channel')]
+
+
+def read_channels_dict(fp=None, tree=None, chfilter=None):
+    """
+    read_channels(fp=None, tree=None, chfilter=None) -> dict
+
+    Return a dictionary of channel dictionaries from file object 'fp'
+    or the ElementTree 'tree', the channel id is used as a key for the
+    main dictionary; if provided, only channels in chfilter
+    are kept in output
+    """
+    if fp:
+        et = ElementTree()
+        tree = et.parse(fp)
+    chd = {}
+    for elem in tree.findall('channel'):
+        ch = elem_to_channel(elem)
+        if chfilter is not None:
+            if ch['id'] not in chfilter: continue
+        chd[ch['id']] = ch
+    return chd
 
 
 def elem_to_programme(elem):
@@ -258,6 +296,37 @@ def read_programmes(fp=None, tree=None):
         et = ElementTree()
         tree = et.parse(fp)
     return [elem_to_programme(elem) for elem in tree.findall('programme')]
+
+
+def read_programmes_dict(fp=None, tree=None, chfilter=None, minstart=0):
+    """
+    read_programmes_dict(fp=None, tree=None, chfilter=None, minstart=0) -> dict
+
+    Return a dictionary of programme dictionaries from file object
+    'fp' or the ElementTree 'tree', channel id and timestamp of programme
+    start are used as a key for the main dictionary; if provided,
+    only channels in chfilter and programmes starting after minstart
+    (string or datetime object) are kept in output
+    """
+    if fp:
+        et = ElementTree()
+        tree = et.parse(fp)
+    prd = {}
+    if isinstance(minstart, str):
+        tsmin = timestamp_from_xmltvtime(minstart)
+    elif isinstance(minstart, datetime.datetime):
+        tsmin = int(minstart.timestamp())
+    else:
+        tsmin = minstart
+    for elem in tree.findall('programme'):
+        pr = elem_to_programme(elem)
+        ch = pr['channel']
+        if chfilter is not None:
+            if ch not in chfilter: continue
+        ts = timestamp_from_xmltvtime(pr['start'])
+        if ts < tsmin: continue
+        prd[ch+":"+str(ts)] = pr
+    return prd
 
 
 def read_data(fp=None, tree=None):
