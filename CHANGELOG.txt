@@ -1,7 +1,15 @@
 Changelog
 =========
 
+Version 1.5.0
+-------------
+* Add read-to-dict functions for channels and programmes
+* Add a command-line tool for manipulating xmltv files
+* Switch to setuptools for building and packaging
+* Compatibility with python2 probably lost
+
 Version 1.4.3
+-------------
 * Add pretty_print option to Writer.write()
 
 Version 1.4.2
