@@ -13,8 +13,8 @@ Requirements
 ------------
 There are no extra requirements for Python 2.5 and up. Compatibility
 with latest versions of python 2 is still guaranteed for the xmltv
-module, however the command-line tool is guaranteed to work only on
-with a state-of-the-art python 3 interpreter.
+module, however the command-line tool is guaranteed to work only with
+a state-of-the-art python 3 interpreter.
 
 Usage
 -----

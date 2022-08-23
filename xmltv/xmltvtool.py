@@ -50,7 +50,7 @@ def main():
     if args.back is None and args.start is None:
         minstamp = 0
     elif args.back is not None:
-        minstamp = int((datetime.datetime.now() - datetime.timedelta(days=args.back)).timestamp)
+        minstamp = int((datetime.datetime.now() - datetime.timedelta(days=args.back)).timestamp())
     else:
         minstamp = timestamp_from_xmltvtime(str(args.start))
 
