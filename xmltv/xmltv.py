@@ -314,9 +314,9 @@ class InputFilter:
         if self.chlist is not None:
             good = good and pr['channel'] in self.chlist
         if self.minstart is not None:
-            good = good and tp >= minstart
+            good = good and tp >= self.minstart
         if self.maxstart is not None:
-            good = good and tp <= maxstart
+            good = good and tp <= self.maxstart
         return good
 
 
