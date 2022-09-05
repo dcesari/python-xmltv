@@ -21,13 +21,7 @@ import sys
 import types
 import datetime
 
-if sys.hexversion >= 0x2050000:
-    from xml.etree.cElementTree import ElementTree, Element, SubElement, tostring
-else:
-    try:
-        from cElementTree import ElementTree, Element, SubElement, tostring
-    except ImportError:
-        from elementtree.ElementTree import ElementTree, Element, SubElement, tostring
+from xml.etree.ElementTree import ElementTree, Element, SubElement, tostring, iterparse
 
 # The Python-XMLTV version
 VERSION = "1.5.0"
@@ -146,27 +140,6 @@ def read_channels(fp=None, tree=None):
         et = ElementTree()
         tree = et.parse(fp)
     return [elem_to_channel(elem) for elem in tree.findall('channel')]
-
-
-def read_channels_dict(fp=None, tree=None, chfilter=None):
-    """
-    read_channels(fp=None, tree=None, chfilter=None) -> dict
-
-    Return a dictionary of channel dictionaries from file object 'fp'
-    or the ElementTree 'tree', the channel id is used as a key for the
-    main dictionary; if provided, only channels in chfilter
-    are kept in output
-    """
-    if fp:
-        et = ElementTree()
-        tree = et.parse(fp)
-    chd = {}
-    for elem in tree.findall('channel'):
-        ch = elem_to_channel(elem)
-        if chfilter is not None:
-            if ch['id'] not in chfilter: continue
-        chd[ch['id']] = ch
-    return chd
 
 
 def elem_to_programme(elem):
@@ -298,37 +271,6 @@ def read_programmes(fp=None, tree=None):
     return [elem_to_programme(elem) for elem in tree.findall('programme')]
 
 
-def read_programmes_dict(fp=None, tree=None, chfilter=None, minstart=0):
-    """
-    read_programmes_dict(fp=None, tree=None, chfilter=None, minstart=0) -> dict
-
-    Return a dictionary of programme dictionaries from file object
-    'fp' or the ElementTree 'tree', channel id and timestamp of programme
-    start are used as a key for the main dictionary; if provided,
-    only channels in chfilter and programmes starting after minstart
-    (string or datetime object) are kept in output
-    """
-    if fp:
-        et = ElementTree()
-        tree = et.parse(fp)
-    prd = {}
-    if isinstance(minstart, str):
-        tsmin = timestamp_from_xmltvtime(minstart)
-    elif isinstance(minstart, datetime.datetime):
-        tsmin = int(minstart.timestamp())
-    else:
-        tsmin = minstart
-    for elem in tree.findall('programme'):
-        pr = elem_to_programme(elem)
-        ch = pr['channel']
-        if chfilter is not None:
-            if ch not in chfilter: continue
-        ts = timestamp_from_xmltvtime(pr['start'])
-        if ts < tsmin: continue
-        prd[ch+":"+str(ts)] = pr
-    return prd
-
-
 def read_data(fp=None, tree=None):
     """
     read_data(fp=None, tree=None) -> dict
@@ -345,6 +287,71 @@ def read_data(fp=None, tree=None):
                         'source-data-url', 'generator-info-name',
                         'generator-info-url'))
     return d
+
+
+class InputFilter:
+    def __init__(self, **kwargs):
+        self.chlist = None
+        self.minstart = None
+        self.maxstart = None
+        self.add(**kwargs)
+
+    def add(self, **kwargs):
+        if 'chlist' in kwargs: self.chlist = kwargs['chlist']
+        if 'minstart' in kwargs: self.minstart = kwargs['minstart']
+        if 'maxstart' in kwargs: self.maxstart = kwargs['maxstart']
+        # optimisation
+        self._tstart = self.minstart is not None or self.maxstart is not None
+
+    def channel(self, ch):
+        if self.chlist is not None:
+            return ch['id'] in self.chlist
+        return True
+
+    def programme(self, pr): #chid, ts):
+        good = True
+        if self._tstart: tp = timestamp_from_xmltvtime(pr['start'])
+        if self.chlist is not None:
+            good = good and pr['channel'] in self.chlist
+        if self.minstart is not None:
+            good = good and tp >= minstart
+        if self.maxstart is not None:
+            good = good and tp <= maxstart
+        return good
+
+
+def read_stream(fp, filt=InputFilter()):
+    """
+    read_stream(fp, filt=InputFilter()) -> dict, dict, dict
+
+    Read all the xmltv information from a file pointer in a stream
+    way, without buffering the input in memory. It accepts an optional
+    filter to the input channels and programmes. It returns all the 3
+    objects associated with the xmltv data structure as dictionaries.
+    """
+    datad = {}; chd = {}; prd = {}
+    p = iterparse(fp) # use default, select only end events
+    for ev, el in p:
+        if el.tag == 'channel':
+            ch = elem_to_channel(el)
+            chid = ch['id']
+            if filt.channel(ch):
+                chd[ch['id']] = ch
+            el.clear() # free memory
+        elif el.tag == 'programme':
+            pr = elem_to_programme(el)
+            if filt.programme(pr):
+                ch = pr['channel']
+                ts = timestamp_from_xmltvtime(pr['start'])
+                prd[ch+":"+str(ts)] = pr
+            el.clear() # free memory
+        elif el.tag == 'tv':
+            set_attrs(datad, el,
+                      ('date', 'source-info-url', 'source-info-name',
+                       'source-data-url', 'generator-info-name',
+                       'generator-info-url'))
+
+    return datad, chd, prd
 
 
 def indent(elem, level=0):

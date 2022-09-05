@@ -6,18 +6,14 @@ import sys
 import argparse
 
 
-def readfiltered(filein, channellist, dateinterval):
+def read_filtered(filein, filt):
     if filein == "-":
         fd = sys.stdin
     else:
         fd = open(filein)
 
-    et = ElementTree()
-    tree = et.parse(fd)
+    df, ch, pr = read_stream(fd, filt)
 
-    df = read_data(tree=tree)
-    ch = read_channels_dict(tree=tree, chfilter=channellist)
-    pr = read_programmes_dict(tree=tree, chfilter=channellist, minstart=dateinterval)
     if filein != "-":
         fd.close()
 
@@ -47,28 +43,24 @@ def main():
     args = parser.parse_args()
 
     # process arguments
-    if args.back is None and args.start is None:
-        minstamp = 0
-    elif args.back is not None:
-        minstamp = int((datetime.datetime.now() - datetime.timedelta(days=args.back)).timestamp())
-    else:
-        minstamp = timestamp_from_xmltvtime(str(args.start))
+    filt = InputFilter()
+    if args.back is not None:
+        filt.add(minstart=int((datetime.datetime.now() - datetime.timedelta(days=args.back)).timestamp()))
+    elif args.start is not None:
+        filt.add(minstart=timestamp_from_xmltvtime(str(args.start)))
 
-    if args.ch_list == "":
-        chfilt = None
-    else:
-        chfilt = args.ch_list.split(",")
+    if len(args.ch_list) > 0:
+        filt.add(chlist=args.ch_list.split(","))
 
     ch = {}
     pr = {}
-    nofilt = minstamp == 0 and chfilt is None
     # read, filter and merge input
     for infile in args.files[:-1]:
         if args.verbose:
-            print(f"reading{'' if nofilt else ' and filtering'} "+infile)
-        df, ch1, pr1 = readfiltered(infile, chfilt, minstamp)
+            print(f"reading and filtering "+infile)
+        df, ch1, pr1 = read_filtered(infile, filt)
         if args.verbose:
-            print(f"{len(ch1)} channels and {len(pr1)} programmes {'read' if nofilt else 'filtered'} from {infile}")
+            print(f"{len(ch1)} channels and {len(pr1)} programmes filtered from {infile}")
         ch.update(ch1)
         pr.update(pr1)
 
