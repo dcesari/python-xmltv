@@ -6,15 +6,15 @@ Introduction
 python-xmltv is a Python module that provides access to XMLTV data. XMLTV is
 an XML format for storing TV listings.
 
-More information on XMLTV can be found at http://membled.com/work/apps/xmltv/
-
+More information on XMLTV can be found at
+http://wiki.xmltv.org/index.php/XMLTVFormat
 
 Requirements
 ------------
-There are no requirements for Python 2.5 and up. For older versions,
-ElementTree is required, which can be found at
-http://effbot.org/zone/element-index.htm
-
+There are no extra requirements for Python 2.5 and up. Compatibility
+with latest versions of python 2 is still guaranteed for the xmltv
+module, however the command-line tool is guaranteed to work only with
+a state-of-the-art python 3 interpreter.
 
 Usage
 -----
@@ -91,17 +91,17 @@ strings, except for dictionary keys, should be in Unicode.
 
 It contains the following methods:
 
-    **__init__** ``(fp, encoding="iso-8859-1", date=None, source_info_url=None, source_info_name=None, generator_info_url=None, generator_info_name=None)`` -> ``Writer``
+    **__init__** ``(fp, encoding="UTF-8", date=None, source_info_url=None, source_info_name=None, generator_info_url=None, generator_info_name=None)`` -> ``Writer``
         Returns a Writer object.
 
     Arguments:
 
-        ``fp``
+            ``fp``
         A File object to write XMLTV data to
 
             ``encoding``
         The text encoding that will be used. *Defaults to
-        ``iso-8859-1``*
+        ``UTF-8``*
 
             ``date``
         The date this data was generated. *Optional*
@@ -176,5 +176,5 @@ It contains the following methods:
 
 Reporting Bugs
 --------------
-Please send all bugs, comments, and questions to James Oakley
-<jfunk@funktronics.ca>
+For bugs, comments, and questions, please open an issue on github at
+https://github.com/dcesari/python-xmltv/issues

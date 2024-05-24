@@ -19,21 +19,32 @@ with this software; if not, see <http://www.gnu.org/licenses/>.
 import re
 import sys
 import types
+import datetime
 
-if sys.hexversion >= 0x2050000:
-    from xml.etree.cElementTree import ElementTree, Element, SubElement, tostring
-else:
-    try:
-        from cElementTree import ElementTree, Element, SubElement, tostring
-    except ImportError:
-        from elementtree.ElementTree import ElementTree, Element, SubElement, tostring
+from xml.etree.ElementTree import ElementTree, Element, SubElement, tostring, iterparse
 
 # The Python-XMLTV version
-VERSION = "1.4.3"
+VERSION = "1.5.0"
 
 # The date format used in XMLTV (the %Z will go away in 0.6)
 date_format = '%Y%m%d%H%M%S %Z'
 date_format_notz = '%Y%m%d%H%M%S'
+
+
+def timestamp_from_xmltvtime(tvtime):
+    """
+    timestamp_from_xmltvtime(tvtime) -> int
+
+    return an integer Unix timestamp from an xmltv time,
+    time zone does not actually work at the moment
+    """
+    try:
+        d = datetime.datetime.strptime(tvtime, date_format)
+    except ValueError:
+        tvt = tvtime.split(" ")[0] # remove TZ if any
+        tvt += "0"*(14 - len(tvt)) # lengthen to exactly 14 char
+        d = datetime.datetime.strptime(tvt, date_format_notz)
+    return int(d.timestamp())
 
 
 def set_attrs(d, elem, attrs):
@@ -276,6 +287,71 @@ def read_data(fp=None, tree=None):
                         'source-data-url', 'generator-info-name',
                         'generator-info-url'))
     return d
+
+
+class InputFilter:
+    def __init__(self, **kwargs):
+        self.chlist = None
+        self.minstart = None
+        self.maxstart = None
+        self.add(**kwargs)
+
+    def add(self, **kwargs):
+        if 'chlist' in kwargs: self.chlist = kwargs['chlist']
+        if 'minstart' in kwargs: self.minstart = kwargs['minstart']
+        if 'maxstart' in kwargs: self.maxstart = kwargs['maxstart']
+        # optimisation
+        self._tstart = self.minstart is not None or self.maxstart is not None
+
+    def channel(self, ch):
+        if self.chlist is not None:
+            return ch['id'] in self.chlist
+        return True
+
+    def programme(self, pr): #chid, ts):
+        good = True
+        if self._tstart: tp = timestamp_from_xmltvtime(pr['start'])
+        if self.chlist is not None:
+            good = good and pr['channel'] in self.chlist
+        if self.minstart is not None:
+            good = good and tp >= self.minstart
+        if self.maxstart is not None:
+            good = good and tp <= self.maxstart
+        return good
+
+
+def read_stream(fp, filt=InputFilter()):
+    """
+    read_stream(fp, filt=InputFilter()) -> dict, dict, dict
+
+    Read all the xmltv information from a file pointer in a stream
+    way, without buffering the input in memory. It accepts an optional
+    filter to the input channels and programmes. It returns all the 3
+    objects associated with the xmltv data structure as dictionaries.
+    """
+    datad = {}; chd = {}; prd = {}
+    p = iterparse(fp) # use default, select only end events
+    for ev, el in p:
+        if el.tag == 'channel':
+            ch = elem_to_channel(el)
+            chid = ch['id']
+            if filt.channel(ch):
+                chd[ch['id']] = ch
+            el.clear() # free memory
+        elif el.tag == 'programme':
+            pr = elem_to_programme(el)
+            if filt.programme(pr):
+                ch = pr['channel']
+                ts = timestamp_from_xmltvtime(pr['start'])
+                prd[ch+":"+str(ts)] = pr
+            el.clear() # free memory
+        elif el.tag == 'tv':
+            set_attrs(datad, el,
+                      ('date', 'source-info-url', 'source-info-name',
+                       'source-data-url', 'generator-info-name',
+                       'generator-info-url'))
+
+    return datad, chd, prd
 
 
 def indent(elem, level=0):
