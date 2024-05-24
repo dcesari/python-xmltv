@@ -25,9 +25,10 @@ def main():
     parser = argparse.ArgumentParser(description="""
     Filter and merge xmltv files. This program reads one or more xmltv
     files, optionally keeping only channels in a specified list and/or
-    programmes starting after a specified date and outputs the results of
-    filtering and merging the input. Time zones are ignored at the moment
-    in date computations, however they are correctly kept in output.""")
+    programmes starting after a specified date and outputs the results
+    of filtering and merging the input. Overlapping entries are kept
+    from the last file read. Time zones are ignored at the moment in
+    date computations, however they are correctly kept in output.""")
 
     parser.add_argument("--ch-list", metavar="comma-separated list", type=str, default="",
                         help="list of channels (id's) to keep in output")
